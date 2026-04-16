@@ -1058,6 +1058,10 @@ const params = new URLSearchParams(window.location.search);
 if (params.get('take') === '1') {
   if (params.get('bin')) cfg.binId = params.get('bin');
   if (params.get('key')) cfg.apiKey = params.get('key');
+  // Hide admin tabs for participants
+  document.querySelectorAll('.tab').forEach(tab => {
+    if (!tab.classList.contains('tab-take')) tab.style.display = 'none';
+  });
   switchTab('take');
 }
 </script>
