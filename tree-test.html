@@ -698,7 +698,7 @@ function renderParticipant() {
         <div class="welcome-title">${esc(study.name)}</div>
         <div class="welcome-desc">${esc(study.welcome)}</div>
         <p style="font-size:13px;color:var(--text3);margin-bottom:24px">${study.tasks.length} task${study.tasks.length!==1?'s':''} · Takes about ${study.tasks.length * 1}–${study.tasks.length * 2} minutes</p>
-        <button class="btn btn-accent" style="padding:12px 32px;font-size:15px" onclick="nextParticipantStep()">Start →</button>
+        <button class="btn btn-accent" style="padding:12px 32px;font-size:15px" onclick="beginTest()">Start →</button>
       </div>`;
     return;
   }
