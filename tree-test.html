@@ -618,6 +618,15 @@ function getNodeDepth(nodes, id, depth = 0) {
   }
   return -1;
 }
+
+function getAncestorIds(nodes, targetId, path = []) {
+  for (const n of nodes) {
+    if (n.id === targetId) return path.map(p => p.id);
+    const found = getAncestorIds(n.children, targetId, [...path, n]);
+    if (found) return found;
+  }
+  return null;
+}
 /* ═══════════════════════════════════════
    TASK BUILDER
 ═══════════════════════════════════════ */
@@ -692,7 +701,8 @@ function startParticipant() {
     responses: [],
     taskStart: 0,
     currentPath: [],
-    clicks: 0
+    clicks: 0,
+    clickLog: []
   };
   renderParticipant();
 }
@@ -718,6 +728,7 @@ function renderParticipant() {
   sess.taskStart = Date.now();
   sess.currentPath = [];
   sess.clicks = 0;
+  sess.clickLog = [];
 
   view.innerHTML = `
     <div class="task-screen">
@@ -757,6 +768,7 @@ function renderPTree(nodes, container, ancestorLabels) {
     row.onclick = (e) => {
       e.stopPropagation();
       sess.clicks++;
+      sess.clickLog.push(n.id);
       sess.currentPath = newPath.map((l,i) => ({label:l}));
       updatePathDisplay(newPath);
       if (isLeaf) {
@@ -798,7 +810,11 @@ function selectAnswer(node) {
   const task = study.tasks[sess.taskIndex];
   const timeTaken = Math.round((Date.now() - sess.taskStart) / 1000);
   const correct = node.id === task.answer;
-  const directScore = correct && sess.currentPath.length <= (getNodeDepth(study.tree, node.id) + 1);
+  const correctAncestorIds = getAncestorIds(study.tree, node.id);
+  const backtracked = sess.clickLog.some(clickedId =>
+    clickedId !== node.id && !correctAncestorIds.includes(clickedId)
+  );
+  const directScore = correct && !backtracked;
   sess.responses.push({
     taskId: task.id,
     taskQ: task.question,
