@@ -355,7 +355,7 @@ textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
         <label>Study URL</label>
         <div class="share-box">
           <span class="share-url" id="shareUrl">Set up your JSONBin API key first in Admin setup</span>
-          <button class="btn btn-sm" onclick="copyUrl()">Copy</button>
+          <button class="btn btn-sm" onclick="copyUrl(this)">Copy</button>
         </div>
         <div style="margin-top:20px">
           <div class="card-title">Study overview</div>
@@ -682,13 +682,12 @@ function updateSharePanel() {
       <strong>Task ${i+1}:</strong> ${esc(t.question) || '<em style="color:var(--text3)">No question set</em>'}
     </div>`).join('');
 }
-function copyUrl() {
+function copyUrl(btn) {
   const u = el('shareUrl').textContent;
   navigator.clipboard.writeText(u).catch(()=>{});
-  event.target.textContent = 'Copied!';
-  setTimeout(() => event.target.textContent = 'Copy', 1800);
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 1800);
 }
-
 /* ═══════════════════════════════════════
    PARTICIPANT FLOW
 ═══════════════════════════════════════ */
