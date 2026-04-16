@@ -357,10 +357,7 @@ textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
           <span class="share-url" id="shareUrl">Set up your JSONBin API key first in Admin setup</span>
           <button class="btn btn-sm" onclick="copyUrl()">Copy</button>
         </div>
-        <div style="margin-top:12px">
-          <button class="btn btn-accent" onclick="publishStudy()">Publish study to JSONBin</button>
-          <p style="font-size:12px;color:var(--text3);margin-top:6px">Run this every time you update your tree or tasks, so participants see the latest version.</p>
-        </div>
+        <div style="margin-top:20px">
           <div class="card-title">Study overview</div>
           <div class="notice" style="margin-bottom:12px">
             Tasks: <strong id="taskCount">0</strong> &nbsp;·&nbsp; Tree nodes: <strong id="nodeCount">0</strong>
@@ -426,18 +423,13 @@ let nextTaskId = 3;
 
 function loadLS() {
   try {
-    const keys = ['treetest_v3', 'treetest_v2', 'treetest_study_v2'];
-    for (const key of keys) {
-      const d = localStorage.getItem(key);
-      if (d) {
-        const p = JSON.parse(d);
-        if (p.cfg) cfg = p.cfg;
-        if (p.study) study = p.study;
-        if (p.nextNodeId) nextNodeId = p.nextNodeId;
-        if (p.nextTaskId) nextTaskId = p.nextTaskId;
-        if (key !== LS) localStorage.setItem(LS, JSON.stringify({cfg,study,nextNodeId,nextTaskId}));
-        break;
-      }
+    const d = localStorage.getItem(LS);
+    if (d) {
+      const p = JSON.parse(d);
+      if (p.cfg) cfg = p.cfg;
+      if (p.study) study = p.study;
+      if (p.nextNodeId) nextNodeId = p.nextNodeId;
+      if (p.nextTaskId) nextTaskId = p.nextTaskId;
     }
   } catch(e) {}
 }
@@ -475,12 +467,6 @@ async function saveApiKey() {
     if (data.metadata && data.metadata.id) {
       cfg.binId = data.metadata.id;
       saveLS();
-      // save study config into the bin immediately
-      await fetch('https://api.jsonbin.io/v3/b/' + cfg.binId, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Master-Key': key },
-        body: JSON.stringify({studyConfig: study, responses: []})
-      });
       el('apiStatus').innerHTML = '✓ Connected! Bin ID: <code style="font-family:monospace">' + cfg.binId + '</code>';
       el('apiStatus').style.color = '#2d5a27';
       el('configNotice').style.borderColor = '#86efac';
@@ -673,29 +659,7 @@ function updateSharePanel() {
       <strong>Task ${i+1}:</strong> ${esc(t.question) || '<em style="color:var(--text3)">No question set</em>'}
     </div>`).join('');
 }
-async function publishStudy() {
-  if (!cfg.apiKey || !cfg.binId) { alert('Set up your JSONBin API key first.'); return; }
-  const btn = event.target;
-  btn.textContent = 'Publishing…';
-  btn.disabled = true;
-  try {
-    const existing = await fetchResults();
-    await fetch('https://api.jsonbin.io/v3/b/' + cfg.binId, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-Master-Key': cfg.apiKey },
-      body: JSON.stringify({studyConfig: study, responses: existing})
-    });
-    btn.textContent = '✓ Published!';
-    btn.style.background = 'var(--accent)';
-    btn.style.color = 'white';
-    btn.style.borderColor = 'var(--accent)';
-    setTimeout(() => { btn.textContent = 'Publish study'; btn.disabled = false; btn.style = ''; }, 2000);
-  } catch(e) {
-    btn.textContent = 'Error — try again';
-    btn.disabled = false;
-  }
-}
-
+function copyUrl() {
   const u = el('shareUrl').textContent;
   navigator.clipboard.writeText(u).catch(()=>{});
   event.target.textContent = 'Copied!';
@@ -707,7 +671,8 @@ async function publishStudy() {
 ═══════════════════════════════════════ */
 let sess = {};
 
-async function startParticipant() {
+function startParticipant() {
+  // read URL params if participant mode
   const params = new URLSearchParams(window.location.search);
   if (params.get('bin') && params.get('key')) {
     cfg.binId = params.get('bin');
@@ -719,29 +684,14 @@ async function startParticipant() {
     responses: [],
     taskStart: 0,
     currentPath: [],
-    clicks: 0,
-    started: false
+    clicks: 0
   };
-
-  // If opened as participant link, load study config from JSONBin
-  if (params.get('take') === '1' && cfg.binId && cfg.apiKey) {
-    el('participantView').innerHTML = '<div class="loading"><span class="spinner"></span> Loading study…</div>';
-    try {
-      const res = await fetch('https://api.jsonbin.io/v3/b/' + cfg.binId + '/latest', {
-        headers: { 'X-Master-Key': cfg.apiKey }
-      });
-      const data = await res.json();
-      if (data.record && data.record.studyConfig) {
-        study = data.record.studyConfig;
-      }
-    } catch(e) { console.warn('Could not load study config from bin, using local', e); }
-  }
   renderParticipant();
 }
 
 function renderParticipant() {
   const view = el('participantView');
-  if (!sess.started) {
+  if (sess.taskIndex === 0 && sess.responses.length === 0) {
     view.innerHTML = `
       <div class="welcome-screen">
         <div class="welcome-icon">🗺️</div>
@@ -871,7 +821,8 @@ function skipTask() {
 }
 
 function nextParticipantStep() {
-  sess.started = true;
+  sess.taskIndex = 0;
+  sess.responses = [];
   sess.taskStart = Date.now();
   renderParticipant();
 }
