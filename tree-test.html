@@ -426,13 +426,18 @@ let nextTaskId = 3;
 
 function loadLS() {
   try {
-    const d = localStorage.getItem(LS);
-    if (d) {
-      const p = JSON.parse(d);
-      if (p.cfg) cfg = p.cfg;
-      if (p.study) study = p.study;
-      if (p.nextNodeId) nextNodeId = p.nextNodeId;
-      if (p.nextTaskId) nextTaskId = p.nextTaskId;
+    const keys = ['treetest_v3', 'treetest_v2', 'treetest_study_v2'];
+    for (const key of keys) {
+      const d = localStorage.getItem(key);
+      if (d) {
+        const p = JSON.parse(d);
+        if (p.cfg) cfg = p.cfg;
+        if (p.study) study = p.study;
+        if (p.nextNodeId) nextNodeId = p.nextNodeId;
+        if (p.nextTaskId) nextTaskId = p.nextTaskId;
+        if (key !== LS) localStorage.setItem(LS, JSON.stringify({cfg,study,nextNodeId,nextTaskId}));
+        break;
+      }
     }
   } catch(e) {}
 }
