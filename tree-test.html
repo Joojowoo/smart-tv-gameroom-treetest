@@ -691,7 +691,7 @@ function startParticipant() {
 
 function renderParticipant() {
   const view = el('participantView');
-  if (sess.taskIndex === 0 && sess.responses.length === 0) {
+  if (!sess.started) {
     view.innerHTML = `
       <div class="welcome-screen">
         <div class="welcome-icon">🗺️</div>
@@ -826,6 +826,12 @@ function nextParticipantStep() {
   sess.taskStart = Date.now();
   renderParticipant();
 }
+
+function beginTest() {
+  sess.started = true;
+  sess.taskStart = Date.now();
+  renderParticipant();
+} 
 
 function renderCompleteScreen() {
   const correct = sess.responses.filter(r => r.correct).length;
