@@ -666,8 +666,14 @@ function updateTask(id, field, val) {
 ═══════════════════════════════════════ */
 function updateSharePanel() {
   const url = window.location.href.split('?')[0];
+  const studyEncoded = btoa(unescape(encodeURIComponent(JSON.stringify({
+    name: study.name,
+    welcome: study.welcome,
+    tree: study.tree,
+    tasks: study.tasks
+  }))));
   el('shareUrl').textContent = cfg.binId
-    ? url + '?bin=' + cfg.binId + '&key=' + encodeURIComponent(cfg.apiKey) + '&take=1'
+    ? url + '?bin=' + cfg.binId + '&key=' + encodeURIComponent(cfg.apiKey) + '&study=' + studyEncoded + '&take=1'
     : 'Set up your JSONBin API key first in Admin setup';
   el('taskCount').textContent = study.tasks.length;
   el('nodeCount').textContent = countNodes(study.tree);
@@ -694,6 +700,15 @@ function startParticipant() {
   if (params.get('bin') && params.get('key')) {
     cfg.binId = params.get('bin');
     cfg.apiKey = params.get('key');
+  }
+  if (params.get('study')) {
+    try {
+      const decoded = JSON.parse(decodeURIComponent(escape(atob(params.get('study')))));
+      if (decoded.tree) study.tree = decoded.tree;
+      if (decoded.tasks) study.tasks = decoded.tasks;
+      if (decoded.name) study.name = decoded.name;
+      if (decoded.welcome) study.welcome = decoded.welcome;
+    } catch(e) { console.error('Failed to decode study', e); }
   }
   sess = {
     id: 'P' + Date.now().toString(36).toUpperCase().slice(-6),
